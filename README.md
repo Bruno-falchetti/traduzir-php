@@ -97,14 +97,18 @@ const MYMEMORY_EMAIL = 'seu@email.com';
 Nenhum cadastro é necessário — o e-mail é usado apenas como identificador de cota.
 
 ---
-
 ## Estrutura do Projeto
 
-```
-linguaflow/
-└── tradutor.php       # Aplicação completa (backend + frontend em um arquivo)
-└── README.md          # Documentação
-```
+translate-php/
+├── home.php              # Página principal (tradutor)
+├── historico.php         # Página de histórico
+├── funcoes.php           # Funções PHP (tradução, utilidades)
+├── style.css             # Estilos globais (UI)
+├── README.md             # Documentação do projeto
+
+├── js/
+│   └── script.js         # Lógica JS (cookies, UI, interações)
+
 
 ---
 
