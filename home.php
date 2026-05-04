@@ -102,16 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </main>
 </div>
 
-<!-- BANNER DE COOKIES -->
-<div id="cookieBanner" class="cookie-banner">
-    <p>Deseja aceitar os cookies?</p>
-    <div class="btn-row">
-        <button id="acceptCookies" class="btn-main" style="padding: 8px 20px; width: auto;">Aceitar</button>
-        <button id="rejectCookies" class="btn-clear" style="padding: 8px 20px;">Recusar</button>
-    </div>
-</div>
-
-<!-- DADOS PHP → JS -->
 <script>
 const PHP_DATA = {
     query: <?= json_encode($texto_input) ?>,

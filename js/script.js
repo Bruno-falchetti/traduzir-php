@@ -14,12 +14,12 @@ function saveHistory(history) {
 function addToHistory(entry) {
     let history = getHistory();
 
-    // evita duplicado
+    // Evita duplicata consecutiva
     if (history[0]?.orig === entry.orig) return;
 
     history.unshift(entry);
 
-    // limita a 15
+    // Limita a 15 entradas
     history = history.slice(0, 15);
 
     saveHistory(history);
@@ -34,7 +34,7 @@ function saveToHistory() {
         orig: PHP_DATA.query,
         trad: PHP_DATA.result,
         lang: PHP_DATA.langs,
-        date: new Date().toLocaleTimeString([], {
+        date: new Date().toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit'
         })
@@ -43,43 +43,30 @@ function saveToHistory() {
     addToHistory(entry);
 }
 
+// ================= ESCAPE HTML =================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
 
-    const input = document.getElementById('inputTxt');
-    const output = document.getElementById('outputTxt');
+    const input    = document.getElementById('inputTxt');
+    const output   = document.getElementById('outputTxt');
     const clearBtn = document.getElementById('clearInput');
-    const copyBtn = document.getElementById('copyBtn');
-    const swapBtn = document.getElementById('swapBtn');
-    const selOrig = document.getElementById('selOrig');
-    const selDest = document.getElementById('selDest');
+    const copyBtn  = document.getElementById('copyBtn');
+    const swapBtn  = document.getElementById('swapBtn');
+    const selOrig  = document.getElementById('selOrig');
+    const selDest  = document.getElementById('selDest');
 
-    const banner = document.getElementById('cookieBanner');
-
-    // ================= COOKIE BANNER (OPCIONAL) =================
-    const consent = localStorage.getItem('cookie_consent');
-
-    if (consent === null && banner) {
-        setTimeout(() => banner.style.display = 'flex', 500);
-    }
-
-    document.getElementById('acceptCookies')?.addEventListener('click', () => {
-        localStorage.setItem('cookie_consent', 'true');
-        banner.style.display = 'none';
-        saveToHistory();
-    });
-
-    document.getElementById('rejectCookies')?.addEventListener('click', () => {
-        localStorage.setItem('cookie_consent', 'false');
-        banner.style.display = 'none';
-    });
-
-    // salva direto (independente de cookie)
+    // Salva no histórico assim que a página carrega (se vier resultado do PHP)
     saveToHistory();
 
     // ================= LIMPAR TEXTO =================
     clearBtn?.addEventListener('click', () => {
-        if (input) input.value = '';
+        if (input)  input.value  = '';
         if (output) output.value = '';
         updateCounter();
     });
@@ -88,12 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
     copyBtn?.addEventListener('click', () => {
         if (!output?.value) return;
 
-        navigator.clipboard.writeText(output.value);
-        copyBtn.textContent = 'Copiado!';
-
-        setTimeout(() => {
-            copyBtn.textContent = 'Copiar';
-        }, 1200);
+        navigator.clipboard.writeText(output.value).then(() => {
+            copyBtn.textContent = '✓ Copiado!';
+            setTimeout(() => { copyBtn.textContent = 'Copiar'; }, 1400);
+        });
     });
 
     // ================= SWAP =================
@@ -109,86 +94,90 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCounter();
     });
 
-    // ================= CONTADOR =================
+    // ================= CONTADOR DE CHARS =================
     let counter = document.querySelector('.char-counter');
 
     function updateCounter() {
         if (!input || !counter) return;
-
         const len = input.value.length;
         counter.textContent = `${len}/500`;
-        counter.style.color = len > 500 ? 'var(--err)' : 'var(--muted)';
+        counter.style.color = len > 450 ? 'var(--err)' : 'var(--muted)';
     }
 
     if (input) {
+        // Cria o contador se não existir no HTML
         if (!counter) {
             counter = document.createElement('span');
             counter.className = 'char-counter';
             input.parentElement.appendChild(counter);
         }
-
         input.addEventListener('input', updateCounter);
         updateCounter();
     }
 
-    // ================= HISTÓRICO PAGE =================
+    // ================= PÁGINA DE HISTÓRICO =================
     const historyList = document.getElementById('fullHistoryList');
-    const delHistBtn = document.getElementById('delHist');
+    const delHistBtn  = document.getElementById('delHist');
 
     if (historyList) {
+        renderHistory();
+    }
+
+    function renderHistory() {
         const history = getHistory();
 
         if (history.length === 0) {
-            historyList.innerHTML = '<p id="emptyMsg">Nenhuma tradução encontrada.</p>';
-        } else {
-            historyList.innerHTML = history.map(item => `
-                <div class="hist-item">
-                    <div class="hist-meta">${item.lang} - ${item.date}</div>
-                    <p><strong>Original:</strong> ${escapeHtml(item.orig)}</p>
-                    <p><strong>Tradução:</strong> ${escapeHtml(item.trad)}</p>
-                </div>
-            `).join('');
+            historyList.innerHTML = `
+                <div class="hist-empty">
+                    <span class="hist-empty-icon">📭</span>
+                    <p>Nenhuma tradução encontrada.</p>
+                    <a href="home.php">Fazer minha primeira tradução →</a>
+                </div>`;
+            return;
         }
+
+        historyList.innerHTML = history.map((item, i) => `
+            <div class="hist-item" style="animation-delay: ${i * 0.05}s">
+                <div class="hist-meta">
+                    <span class="hist-langs">${escapeHtml(item.lang)}</span>
+                    <span class="hist-time">⏱ ${escapeHtml(item.date)}</span>
+                </div>
+                <div class="hist-body">
+                    <div class="hist-col">
+                        <span class="hist-label">Original</span>
+                        <p>${escapeHtml(item.orig)}</p>
+                    </div>
+                    <div class="hist-arrow">→</div>
+                    <div class="hist-col">
+                        <span class="hist-label">Tradução</span>
+                        <p>${escapeHtml(item.trad)}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 
     // ================= LIMPAR HISTÓRICO =================
     delHistBtn?.addEventListener('click', () => {
-        if (confirm('Tem certeza que deseja limpar o histórico?')) {
-            localStorage.removeItem('tr_history');
-
-            if (historyList) {
-                historyList.innerHTML = '<p id="emptyMsg">Histórico vazio.</p>';
-            }
-        }
+        if (!confirm('Tem certeza que deseja limpar todo o histórico?')) return;
+        localStorage.removeItem('tr_history');
+        if (historyList) renderHistory();
     });
 });
 
 // ================= PAGE TRANSITION =================
-document.addEventListener("DOMContentLoaded", () => {
-    document.body.classList.add("fade-in");
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('fade-in');
 
-    const links = document.querySelectorAll("a");
-
-    links.forEach(link => {
+    document.querySelectorAll('a').forEach(link => {
         if (link.hostname === window.location.hostname) {
-            link.addEventListener("click", function (e) {
+            link.addEventListener('click', function (e) {
                 e.preventDefault();
                 const url = this.href;
-
-                document.body.classList.remove("fade-in");
-                document.body.classList.add("fade-out");
-
-                setTimeout(() => {
-                    window.location.href = url;
-                }, 300);
+                document.body.classList.remove('fade-in');
+                document.body.classList.add('fade-out');
+                setTimeout(() => { window.location.href = url; }, 300);
             });
         }
     });
 });
-
-// ================= ESCAPE HTML =================
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
