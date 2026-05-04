@@ -68,7 +68,7 @@ http://localhost/translate-php/tradutor.php
 
 ---
 
-## ⚙️ Configuração
+## Configuração
 
 Abra o arquivo `tradutor.php` e localize o bloco de configurações no topo:
 
@@ -97,16 +97,14 @@ const MYMEMORY_EMAIL = 'seu@email.com';
 Nenhum cadastro é necessário — o e-mail é usado apenas como identificador de cota.
 
 ---
-## Estrutura do Projeto
 translate-php/
-├── home.php
-├── historico.php
-├── funcoes.php
-├── style.css
-├── README.md
-├── js/
-│   └── script.js
----
+├── home.php           # Página principal — interface de tradução
+├── historico.php      # Página de histórico de traduções
+├── funcoes.php        # Funções PHP reutilizáveis e configurações da API
+├── style.css          # Estilos globais da aplicação
+├── README.md          # Documentação do projeto
+└── js/
+    └── script.js      # Lógica de interação do frontend (contador, swap, copiar etc.)
 
 ## Idiomas Suportados
 
