@@ -61,7 +61,7 @@ cp -r translate-php/ /opt/lampp/htdocs/translate-php  # Linux
 # 3. Inicie o Apache no painel do XAMPP
 
 # 4. Acesse no navegador
-http://localhost/linguaflow/tradutor.php
+http://localhost/translate-php/tradutor.php
 ```
 
 > **Windows:** copie a pasta diretamente para `C:\xampp\htdocs\` usando o Explorer se preferir.
