@@ -51,12 +51,12 @@
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/seu-usuario/linguaflow.git
+git clone https://github.com/bruno-falchetti/translate-php.git
 
 # 2. Mova para a pasta do XAMPP
-cp -r linguaflow/ C:/xampp/htdocs/linguaflow   # Windows
+cp -r translate-php/ C:/xampp/htdocs/translate-php   # Windows
 # ou
-cp -r linguaflow/ /opt/lampp/htdocs/linguaflow  # Linux
+cp -r translate-php/ /opt/lampp/htdocs/translate-php  # Linux
 
 # 3. Inicie o Apache no painel do XAMPP
 
@@ -98,18 +98,14 @@ Nenhum cadastro é necessário — o e-mail é usado apenas como identificador d
 
 ---
 ## Estrutura do Projeto
-
 translate-php/
-├── home.php              # Página principal (tradutor)
-├── historico.php         # Página de histórico
-├── funcoes.php           # Funções PHP (tradução, utilidades)
-├── style.css             # Estilos globais (UI)
-├── README.md             # Documentação do projeto
-
+├── home.php
+├── historico.php
+├── funcoes.php
+├── style.css
+├── README.md
 ├── js/
-│   └── script.js         # Lógica JS (cookies, UI, interações)
-
-
+│   └── script.js
 ---
 
 ## Idiomas Suportados
