@@ -1,47 +1,46 @@
-// ================= COOKIE =================
-function saveCookieHistory(data) {
-    const json = JSON.stringify(data);
-    const encoded = btoa(unescape(encodeURIComponent(json)));
-
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 7);
-
-    document.cookie = `tr_history=${encoded}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-}
-
-function getCookieHistory() {
-    const match = document.cookie.match(/(^| )tr_history=([^;]+)/);
-    if (!match) return [];
-
+// ================= LOCALSTORAGE =================
+function getHistory() {
     try {
-        return JSON.parse(decodeURIComponent(escape(atob(match[2]))));
+        return JSON.parse(localStorage.getItem('tr_history')) || [];
     } catch {
         return [];
     }
 }
 
-function deleteCookie(name) {
-    document.cookie = `${name}=; Max-Age=0; path=/`;
+function saveHistory(history) {
+    localStorage.setItem('tr_history', JSON.stringify(history));
 }
 
-// ================= HISTÓRICO =================
-function saveToHistory() {
-    if (localStorage.getItem('cookie_consent') !== 'true');
-    if (!PHP_DATA.query || !PHP_DATA.result) return;
-
-    let history = getCookieHistory();
+function addToHistory(entry) {
+    let history = getHistory();
 
     // evita duplicado
-    if (history[0]?.orig === PHP_DATA.query) return;
+    if (history[0]?.orig === entry.orig) return;
 
-    history.unshift({
+    history.unshift(entry);
+
+    // limita a 15
+    history = history.slice(0, 15);
+
+    saveHistory(history);
+}
+
+// ================= SALVAR HISTÓRICO =================
+function saveToHistory() {
+    if (typeof PHP_DATA === 'undefined') return;
+    if (!PHP_DATA.query || !PHP_DATA.result) return;
+
+    const entry = {
         orig: PHP_DATA.query,
         trad: PHP_DATA.result,
         lang: PHP_DATA.langs,
-        date: new Date().toLocaleString()
-    });
+        date: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    };
 
-    saveCookieHistory(history.slice(0, 15));
+    addToHistory(entry);
 }
 
 // ================= INIT =================
@@ -57,7 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const banner = document.getElementById('cookieBanner');
 
-    if (localStorage.getItem('cookie_consent')) {
+    // ================= COOKIE BANNER (OPCIONAL) =================
+    const consent = localStorage.getItem('cookie_consent');
+
+    if (consent === null && banner) {
         setTimeout(() => banner.style.display = 'flex', 500);
     }
 
@@ -72,28 +74,38 @@ document.addEventListener('DOMContentLoaded', () => {
         banner.style.display = 'none';
     });
 
-    if (localStorage.getItem('cookie_consent') === 'true') {
-        saveToHistory();
-    }
+    // salva direto (independente de cookie)
+    saveToHistory();
 
-    
+    // ================= LIMPAR TEXTO =================
     clearBtn?.addEventListener('click', () => {
-        input.value = '';
-        output.value = '';
+        if (input) input.value = '';
+        if (output) output.value = '';
         updateCounter();
     });
 
+    // ================= COPIAR =================
     copyBtn?.addEventListener('click', () => {
-        if (!output.value) return;
+        if (!output?.value) return;
+
         navigator.clipboard.writeText(output.value);
         copyBtn.textContent = 'Copiado!';
-        setTimeout(() => copyBtn.textContent = 'Copiar', 1200);
+
+        setTimeout(() => {
+            copyBtn.textContent = 'Copiar';
+        }, 1200);
     });
 
     // ================= SWAP =================
     swapBtn?.addEventListener('click', () => {
+        if (!selOrig || !selDest) return;
+
         [selOrig.value, selDest.value] = [selDest.value, selOrig.value];
-        [input.value, output.value] = [output.value, input.value];
+
+        if (input && output) {
+            [input.value, output.value] = [output.value, input.value];
+        }
+
         updateCounter();
     });
 
@@ -101,7 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let counter = document.querySelector('.char-counter');
 
     function updateCounter() {
-        if (!counter) return;
+        if (!input || !counter) return;
+
         const len = input.value.length;
         counter.textContent = `${len}/500`;
         counter.style.color = len > 500 ? 'var(--err)' : 'var(--muted)';
@@ -113,11 +126,43 @@ document.addEventListener('DOMContentLoaded', () => {
             counter.className = 'char-counter';
             input.parentElement.appendChild(counter);
         }
+
         input.addEventListener('input', updateCounter);
         updateCounter();
     }
 
-})
+    // ================= HISTÓRICO PAGE =================
+    const historyList = document.getElementById('fullHistoryList');
+    const delHistBtn = document.getElementById('delHist');
+
+    if (historyList) {
+        const history = getHistory();
+
+        if (history.length === 0) {
+            historyList.innerHTML = '<p id="emptyMsg">Nenhuma tradução encontrada.</p>';
+        } else {
+            historyList.innerHTML = history.map(item => `
+                <div class="hist-item">
+                    <div class="hist-meta">${item.lang} - ${item.date}</div>
+                    <p><strong>Original:</strong> ${escapeHtml(item.orig)}</p>
+                    <p><strong>Tradução:</strong> ${escapeHtml(item.trad)}</p>
+                </div>
+            `).join('');
+        }
+    }
+
+    // ================= LIMPAR HISTÓRICO =================
+    delHistBtn?.addEventListener('click', () => {
+        if (confirm('Tem certeza que deseja limpar o histórico?')) {
+            localStorage.removeItem('tr_history');
+
+            if (historyList) {
+                historyList.innerHTML = '<p id="emptyMsg">Histórico vazio.</p>';
+            }
+        }
+    });
+});
+
 // ================= PAGE TRANSITION =================
 document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("fade-in");
@@ -140,3 +185,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+// ================= ESCAPE HTML =================
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
